@@ -1,7 +1,7 @@
 import numpy as np
-import util
+from src import util
 
-from linear_model import LinearModel
+from src.linear_model import LinearModel
 
 
 def main(train_path, eval_path, pred_path):
@@ -47,7 +47,7 @@ class GDA(LinearModel):
             return np.sum(y) / m
 
         def mu(x,y):
-            '''Returns the conditional mean of X given y in the GDA model.
+            '''Returns the conditional mean of x given y in the GDA model.
             Args:
                 :param x: array of shape (m,n).
                 :param y: array of shape (m,).
@@ -63,17 +63,14 @@ class GDA(LinearModel):
         def sigma(x,y):
             '''returns the covariance matrix for the distributions of x given y.
     
-            :param X: array of shape (m,n).
+            :param x: array of shape (m,n).
             :param y: array of shape (m,).
             '''
-            # create an array where row i is the mean mu_j where j matches the label of x^i.
+            ## Create an array where row i is x^i minus its label empirical mean.
+            centered = x - (np.array([1-y , y]).T @ mu(x,y))
             
-            mean = np.tile(mu(x,y)[0,:], (m,1)) * (1-y).reshape(-1,1) + np.tile(mu(x,y)[1,:], (m,1)) * y.reshape(-1,1)
-
-            # create an array where row i is x^i minus its label empirical mean.
-            centered = x - mean
-            outer_along_rows = np.einsum('ij,ik->jk', centered , centered)
-            return 1/m * outer_along_rows
+            ## Average the row-wise outer square of the centered array.
+            return (centered.reshape((m,n,1)) * centered.reshape((m,1,n))).mean(axis=0)
 
         def calculate_logistic_fit(phi,mu,sigma):
             sig_inv = np.linalg.inv(sigma)

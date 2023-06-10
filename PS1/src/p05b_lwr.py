@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import util
+from src import util
 
-from linear_model import LinearModel
+from src.linear_model import LinearModel
 
 
 def main(tau, train_path, eval_path):
@@ -22,8 +22,6 @@ def main(tau, train_path, eval_path):
     # Plot validation predictions on top of training set
     # No need to save predictions
     # Plot data
-    # *** END CODE HERE ***
-
 
 class LocallyWeightedLinearRegression(LinearModel):
     """Locally Weighted Regression (LWR).
@@ -91,10 +89,9 @@ class LocallyWeightedLinearRegression(LinearModel):
        
 ### Testing code below
 
-x_train , y_train = util.load_dataset('../data/ds5_train.csv', add_intercept=True)
-x_test , y_test = util.load_dataset('../data/ds5_test.csv', add_intercept=True)
+x_train , y_train = util.load_dataset('./data/ds5_train.csv', add_intercept=True)
+x_test , y_test = util.load_dataset('./data/ds5_test.csv', add_intercept=True)
 
 model = LocallyWeightedLinearRegression(tau=0.5)
 model.fit(x_train,y_train)
 y_predicts = model.predict(x_test)
-print(y_predicts.shape)

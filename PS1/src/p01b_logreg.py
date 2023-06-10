@@ -1,7 +1,7 @@
 import numpy as np
-import util
+from src import util
 
-from linear_model import LinearModel
+from src.linear_model import LinearModel
 
 def main(train_path, eval_path, pred_path):
     """Problem 1(b): Logistic regression with Newton's Method.
@@ -17,7 +17,7 @@ def main(train_path, eval_path, pred_path):
     logreg_model = LogisticRegression()
     logreg_model.fit(x_train,y_train)
     
-    x_valid , y_valid = util.load_dataset(eval_path, add_intercept=True)
+    x_valid , _ = util.load_dataset(eval_path, add_intercept=True)
     y_predicted = logreg_model.predict(x_valid)
     np.savetxt(pred_path, y_predicted , delimiter=',')
 
@@ -37,6 +37,7 @@ class LogisticRegression(LinearModel):
             x: Training example inputs. Shape (m, n).
             y: Training example labels. Shape (m,).
         """
+        x = util.add_intercept(x)
         m , n = x.shape
 
         def h(x,theta):
