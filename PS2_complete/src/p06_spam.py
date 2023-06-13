@@ -1,7 +1,5 @@
 import collections
-#%%
 import numpy as np
-#%%
 
 import util
 import svm
@@ -106,6 +104,7 @@ def fit_naive_bayes_model(matrix, labels):
         new = np.ones((m+1,n))
         new[:m,:] = matrix
         return new
+    
     num_of_ex , _ = matrix.shape
 
     ##* The positive (negative) matrix has rows with label 0 (1) set to zero, and rows with label 1 (0) unchanged.
@@ -189,6 +188,7 @@ def compute_best_svm_radius(train_matrix, train_labels, val_matrix, val_labels, 
 
     max_index = np.array(scores).argmax()
     return radius_to_consider[max_index]
+
 def main():
     train_messages, train_labels = util.load_spam_dataset('./data/ds6_train.tsv')
     val_messages, val_labels = util.load_spam_dataset('./data/ds6_val.tsv')
