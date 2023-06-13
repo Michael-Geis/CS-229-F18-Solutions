@@ -1,11 +1,9 @@
-#%%
 import math
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import util
-#%%
 def initial_state():
     """Return the initial state for the perceptron.
 
@@ -16,7 +14,6 @@ def initial_state():
     """
 
     return {'beta' : None , 'training_examples' : None}
-#%%
 def predict(state, kernel, x_i):
     """Peform a prediction on a given instance x_i given the current state
     and the kernel.
@@ -38,8 +35,7 @@ def predict(state, kernel, x_i):
     ## Remember k_vector is a 1 dim numpy array.
 
         return sign(np.dot(k_vector, state['beta']))
-#%%
-#%%
+
 def update_state(state, kernel, learning_rate, x_i, y_i):
     """Updates the state of the perceptron.
 
