@@ -4,62 +4,61 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import util
-def initial_state():
-    """Return the initial state for the perceptron.
 
-    This function computes and then returns the initial state of the perceptron.
-    Feel free to use any data type (dicts, lists, tuples, or custom classes) to
-    contain the state of the perceptron.
-
-    """
-
-    return {'beta' : None , 'training_examples' : None}
-def predict(state, kernel, x_i):
-    """Peform a prediction on a given instance x_i given the current state
-    and the kernel.
-
-    Args:
-        state: The state returned from initial_state()
-        kernel: A binary function that takes two vectors as input and returns
-            the result of a kernel
-        x_i: A vector containing the features for a single instance
+class ModelState:
     
-    Returns:
-        Returns the prediction (i.e 0 or 1)
-    """
-    if state['training_examples'] is None:
-        return 1
-    else:
-        k_vector = np.apply_along_axis(arr=state['training_examples'] , func1d=kernel, b=x_i, axis=1)
+    def __init__(self, parameters=[], training_examples = []):
+        self.parameters=parameters
+        self.training_examples=training_examples
+        self.initial = True
 
-    ## Remember k_vector is a 1 dim numpy array.
+    def predict(self, kernel, x_i):
+        """Peform a prediction on a given instance x_i given the current state
+        and the kernel.
 
-        return sign(np.dot(k_vector, state['beta']))
+        Args:
+            state: The state returned from initial_state()
+            kernel: A binary function that takes two vectors as input and returns
+                the result of a kernel
+            x_i: A vector containing the features for a single instance
+        
+        Returns:
+            Returns the prediction (i.e 0 or 1)
+        """
 
-def update_state(state, kernel, learning_rate, x_i, y_i):
-    """Updates the state of the perceptron.
-
-    Args:
-        state: The state returned from initial_state()
-        kernel: A binary function that takes two vectors as input and returns the result of a kernel
-        learning_rate: The learning rate for the update
-        x_i: A vector containing the features for a single instance
-        y_i: A 0 or 1 indicating the label for a single instance
-    """
+        if self.initial:
+            return 1
+        else:
+            kernel_vector = np.apply_along_axis(
+                arr=np.array(self.training_examples),
+                func1d=kernel,
+                b=x_i, 
+                axis=1)
+            
+            return sign(
+                np.dot(
+                kernel_vector, np.array(self.parameters)
+                )
+                )
     
-    ## Calculate the beta coefficient for the new training example
-    ## Note that this only involves the previous training examples, so we don't need to add x_i yet.
-    #  
-    next_beta = learning_rate * (y_i - predict(state,kernel,x_i))
-    
-    if state['training_examples'] is None:
-        state['training_examples'] = (x_i).reshape(1,-1)
-        state['beta'] = np.array([next_beta])
+    def update_state(self, kernel, learning_rate, x_i, y_i):
+        """Updates the state of the perceptron.
 
-    else:
-        state['training_examples'] = np.concatenate( [ state['training_examples'] , (x_i).reshape(1,-1) ] , axis = 0)
-        state['beta'] = np.append(state['beta'], next_beta)
-
+        Args:
+            state: The state returned from initial_state()
+            kernel: A binary function that takes two vectors as input and returns the result of a kernel
+            learning_rate: The learning rate for the update
+            x_i: A vector containing the features for a single instance
+            y_i: A 0 or 1 indicating the label for a single instance
+        """
+        
+        ## Calculate the beta coefficient for the new training example
+        ## Note that this only involves the previous training examples, so we don't need to add x_i yet.
+        #  
+        next_beta = learning_rate * (y_i - self.predict(kernel,x_i))
+        self.parameters.append(next_beta)
+        self.training_examples.append(x_i)
+        self.initial = False
 
 def sign(a):
     """Gets the sign of a scalar input."""
@@ -88,7 +87,7 @@ def rbf_kernel(a, b, sigma=1):
     distance = (a - b).dot(a - b)
     scaled_distance = -distance / (2 * (sigma) ** 2)
     return math.exp(scaled_distance)
-#%%
+
 def train_perceptron(kernel_name, kernel, learning_rate):
     """Train a perceptron with the given kernel.
 
@@ -104,19 +103,19 @@ def train_perceptron(kernel_name, kernel, learning_rate):
     """
     train_x, train_y = util.load_csv('./data/ds5_train.csv')
 
-    state = initial_state()
+    model = ModelState()
 
     for x_i, y_i in zip(train_x, train_y):
-        update_state(state, kernel, learning_rate, x_i, y_i)
+        model.update_state(kernel, learning_rate, x_i, y_i)
         
     test_x, test_y = util.load_csv('./data/ds5_train.csv')
 
     plt.figure(figsize=(12, 8))
-    util.plot_contour(lambda a: int(predict(state, kernel, a)))
+    util.plot_contour(lambda a: int(model.predict(kernel, a)))
     util.plot_points(test_x, test_y)
     plt.savefig('./output/p05_{}_output.pdf'.format(kernel_name))
 
-    predict_y = [predict(state, kernel, test_x[i, :]) for i in range(test_y.shape[0])]
+    predict_y = [model.predict(kernel, test_x[i, :]) for i in range(test_y.shape[0])]
 
     np.savetxt('./output/p05_{}_predictions.csv'.format(kernel_name), predict_y)
 
