@@ -97,33 +97,36 @@ def fit_naive_bayes_model(token_count_array, class_labels):
     Feel free to use whatever datatype you wish for the state of the model.
 
     Args:
-        matrix: A numpy array containing word counts for the training data
-        labels: The binary (0 or 1) labels for that training data
+        token_count_array: A numpy array containing word counts for the training data
+        class_labels: The binary (0 or 1) labels for that training data
 
     Returns: The trained model
     """
-    def add_ones(matrix):
-        m , n = matrix.shape
-        new = np.ones((m+1,n))
-        new[:m,:] = matrix
-        return new
     
     number_of_messages , vocabulary_size = token_count_array.shape
 
-    ##* The positive (negative) matrix has rows with label 0 (1) set to zero, and rows with label 1 (0) unchanged.
-    pos_matrix = class_labels.reshape(-1,1) * token_count_array
-    neg_matrix = token_count_array - pos_matrix
+    spam_token_count_array = token_count_array[class_labels == 1 , :]
+    non_spam_token_count_array = token_count_array[class_labels == 0, :]
 
-    pos_token_probs = add_ones(pos_matrix).sum(axis=0) / add_ones(pos_matrix).sum()
-    neg_token_probs = add_ones(neg_matrix).sum(axis=0) / add_ones(neg_matrix).sum()
-    pos_prior = labels.sum() / num_of_ex
+    vector_of_spam_token_counts = spam_token_count_array.sum(axis=0)
+    vector_of_non_spam_token_counts = non_spam_token_count_array.sum(axis=0)
 
-    ##* In order to predict, we only need to store the vector whose ith entry is the log of p(t_j | y = 1)/p(t_j | y = 0).
-    ##* Together with the log of pos_prior / 1 - pos_prior
-    state = np.log( pos_token_probs / neg_token_probs) , np.log(pos_prior / (1 - pos_prior))
-    return state
+    spam_token_total_count = spam_token_count_array.sum()
+    non_spam_token_total_count = non_spam_token_count_array.sum()
+
+
+    spam_token_probabilities = (vector_of_spam_token_counts + 1) /  (spam_token_total_count + vocabulary_size)
+    non_spam_token_probabilities = (vector_of_non_spam_token_counts + 1) /  (non_spam_token_total_count + vocabulary_size)
+
+    prior_spam_probability = class_labels.sum() / number_of_messages
+
+    ## In order to predict, we only need to store the vector whose ith entry is the log of p(t_j | y = 1)/p(t_j | y = 0).
+
+    model = np.log(spam_token_probabilities / non_spam_token_probabilities) , np.log(prior_spam_probability / (1 - prior_spam_probability))
     
-def predict_from_naive_bayes_model(model, matrix):
+    return model
+    
+def predict_from_naive_bayes_model(model, test_token_count_array):
     """Use a Naive Bayes model to compute predictions for a target matrix.
 
     This function should be able to predict on the models that fit_naive_bayes_model
@@ -131,17 +134,18 @@ def predict_from_naive_bayes_model(model, matrix):
 
     Args:
         model: A trained model from fit_naive_bayes_model
-        matrix: A numpy array containing word counts
+        test_token_count_array: A numpy array containing word counts
 
     Returns: A numpy array containg the predictions from the model
     """
     
-    log_probs , log_prior = model
+    log_probabilities , log_spam_prior = model
 
-    ##* The decision_vector is the value of log p(t | y = 1)p(y=1) / p(t | y = 0)p(y=0) for each of the rows in the test matrix.
-    ##* the linear decision boundary decision_vector > 0 is equivalent to MAP estimation for the posterior distribtution p(y | t).
+    ## The decision_vector is the value of log p(t | y = 1)p(y=1) / p(t | y = 0)p(y=0) for each of the rows in the test matrix.
+    ## the linear decision boundary decision_vector > 0 is equivalent to MAP estimation for the posterior distribtution p(y | t).
 
-    decision_vector = (log_probs.reshape(1,-1) * matrix).sum(axis=1) + log_prior
+    decision_vector = test_token_count_array @ log_probabilities + log_spam_prior
+    
     return (decision_vector > 0).astype(np.int8)
 
 def get_top_five_naive_bayes_words(model, dictionary):
@@ -185,7 +189,10 @@ def compute_best_svm_radius(train_matrix, train_labels, val_matrix, val_labels, 
     """
     scores = []
     for radius in radius_to_consider:
-        predicted_labels = svm.train_and_predict_svm(train_matrix=train_matrix, train_labels=train_labels,test_matrix=val_matrix, radius=radius)
+        predicted_labels = svm.train_and_predict_svm(train_matrix=train_matrix,
+                                                      train_labels=train_labels,
+                                                      test_matrix=val_matrix,
+                                                      radius=radius)
         score = np.mean(predicted_labels == val_labels)
         scores.append(score)
 
