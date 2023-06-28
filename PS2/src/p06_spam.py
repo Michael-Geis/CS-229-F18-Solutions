@@ -37,7 +37,10 @@ d
     Returns:
         A python dict mapping words to integers.
     """
-    
+
+    ## This manually counts all of the words in all of the messages, and creates a secondary dictionary called 
+    ## output which adds a word to its keys once it has been encountered in at least 5 messages, and then maps it to a unique integer.
+
     i = 0
     output = {}
     full_dict = {}
@@ -84,7 +87,7 @@ def transform_text(messages, word_dictionary):
     return array
     
 
-def fit_naive_bayes_model(matrix, labels):
+def fit_naive_bayes_model(token_count_array, class_labels):
     """Fit a naive bayes model.
 
     This function should fit a Naive Bayes model given a training matrix and labels.
@@ -105,11 +108,11 @@ def fit_naive_bayes_model(matrix, labels):
         new[:m,:] = matrix
         return new
     
-    num_of_ex , _ = matrix.shape
+    number_of_messages , vocabulary_size = token_count_array.shape
 
     ##* The positive (negative) matrix has rows with label 0 (1) set to zero, and rows with label 1 (0) unchanged.
-    pos_matrix = labels.reshape(-1,1) * matrix
-    neg_matrix = matrix - pos_matrix
+    pos_matrix = class_labels.reshape(-1,1) * token_count_array
+    neg_matrix = token_count_array - pos_matrix
 
     pos_token_probs = add_ones(pos_matrix).sum(axis=0) / add_ones(pos_matrix).sum()
     neg_token_probs = add_ones(neg_matrix).sum(axis=0) / add_ones(neg_matrix).sum()
